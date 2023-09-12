@@ -5,11 +5,16 @@ const app = express()
 const cors = require('cors');
 const { mail } = require('./Mail/SendMail');
 const Mail = new mail;
-const port = 4000
 app.use(express.json());
 app.use(cors())
 
 const websites = ["https://akinolabs.com", "https://akinolabs.io", "https://aloissolutions.com", "https://aloissolutions.com.au", "https://adrivaservices.com", "https://aloiscomposites.com", "https://aloishealthcare.com", "https://careers.aloissolutions.com", "https://drjslab.org"]
+
+app.get('/', (req,res)=>{
+  console.log("abc");
+  res.send("Status.akinolabs.com")
+})
+
 
 app.post('/', async(req, res) => {
   Promise.all(checkPromises)
@@ -31,7 +36,7 @@ app.post('/upload', (req,res) => {
   res.send("ok")
 })
 
-app.listen(port, (req,res) => {
+app.listen(process.env.PORT, (req,res) => {
   console.log(`Example app listening on port ${process.env.PORT}`)
 })
 
