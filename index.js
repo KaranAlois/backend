@@ -9,7 +9,7 @@ const port = 4000
 app.use(express.json());
 app.use(cors())
 
-const websites = ["https://staging.akinolabs.io", "https://akinolabs.com", "https://akinolabs.io", "https://aloissolutions.com", "https://aloissolutions.com.au", "https://adrivaservices.com", "https://aloiscomposites.com", "https://aloishealthcare.com", "https://careers.aloissolutions.com", "https://drjslab.org"]
+const websites = ["https://akinolabs.com", "https://akinolabs.io", "https://aloissolutions.com", "https://aloissolutions.com.au", "https://adrivaservices.com", "https://aloiscomposites.com", "https://aloishealthcare.com", "https://careers.aloissolutions.com", "https://drjslab.org"]
 
 app.post('/', async(req, res) => {
   Promise.all(checkPromises)
