@@ -32,7 +32,7 @@ app.post('/upload', (req,res) => {
 })
 
 app.listen(port, (req,res) => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Example app listening on port ${process.env.PORT}`)
 })
 
 const receivers = [ { email:'akash.kurup@aloissolutions.com'}]
