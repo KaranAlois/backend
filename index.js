@@ -8,7 +8,7 @@ const Mail = new mail;
 app.use(express.json());
 app.use(cors())
 
-const websites = ["https://akinolabs.com", "https://akinolabs.io", "https://aloissolutions.com", "https://aloissolutions.com.au", "https://adrivaservices.com", "https://aloiscomposites.com", "https://aloishealthcare.com", "https://careers.aloissolutions.com", "https://https://aloisexports.com"]
+const websites = ["https://akinolabs.com", "https://akinolabs.io", "https://aloissolutions.com", "https://aloissolutions.com.au", "https://adrivaservices.com", "https://aloiscomposites.com", "https://aloishealthcare.com", "https://careers.aloissolutions.com", "https://aloisexports.com"]
 
 app.get('/', (req,res)=>{
   console.log("abc");
