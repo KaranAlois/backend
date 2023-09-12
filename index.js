@@ -9,7 +9,7 @@ const port = 4000
 app.use(express.json());
 app.use(cors())
 
-const websites = ["https://akinolabs.com", "https://app.akinolabs.com", "https://sso.akinolabs.com", "https://cicd.akinolabs.com"]
+const websites = ["https://staging.akinolabs.io", "https://akinolabs.com", "https://akinolabs.io", "https://aloissolutions.com", "https://aloissolutions.com.au", "https://adrivaservices.com", "https://aloiscomposites.com", "https://aloishealthcare.com", "https://careers.aloissolutions.com", "https://drjslab.org"]
 
 app.post('/', async(req, res) => {
   Promise.all(checkPromises)
@@ -35,28 +35,40 @@ app.listen(port, (req,res) => {
   console.log(`Example app listening on port ${port}`)
 })
 
+const receivers = [ { email:'akash.kurup@aloissolutions.com'}]
+
 
 function checkWebsiteStatus(url) {
   const protocol = url.startsWith('https://') ? https : http;
 
   return new Promise((resolve, reject) => {
     protocol.get(url, (res) => {
-      if (res.statusCode === 200) {
+      if (res.statusCode === 200 || res.statusCode===403 || res.statusCode===301) {
+        console.log(`${url} is live`);
         resolve({ url, status: 'live' });
+        // console.log("-------------------------------------");
       } else {
-        // Mail.sendMail()
+        console.log(`${url} is down`);
+        Mail.sendMail(receivers,"Server is down", `${url} is down due to ${res.statusMessage} error`)
         resolve({ url, status: 'down', statusCode: res.statusCode });
+        // console.log("-------------------------------------");
       }
     }).on('error', (err) => {
+      console.log(`${url} is down`);
       resolve({ url, status: 'down', error: err.message });
+      Mail.sendMail(receivers,"Server is down", `${url} is down to ${err.message} error`)
+      console.log("-------------------------------------");
     });
   });
 }
 
 const checkPromises = websites.map((url) => checkWebsiteStatus(url));
 function abc(){
-  websites.map((url) => checkWebsiteStatus(url))
+  for(let i=0;i<websites.length;i++){
+    checkWebsiteStatus(websites[i])
+  }
+  // websites.map((url) => checkWebsiteStatus(url))
 }
 
-const intervalId = setInterval(abc(), 5000);
+const intervalId = setInterval(abc, 1800000);
 

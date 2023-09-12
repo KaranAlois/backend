@@ -5,11 +5,12 @@ require('dotenv').config()
 
 class mail{
     constructor(){
+        console.log("Herer====.",process.env.SMTP_USERID);
         this.email = process.env.SMTP_USERID
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: process.env.SMTP_PORT,
-            secure: false,
+            secure: true,
             auth: {
               user: process.env.SMTP_USERID,
               pass: process.env.SMTP_PASSWORD
