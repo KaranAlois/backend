@@ -71,7 +71,7 @@ app.listen(process.env.PORT, (req,res) => {
   console.log(`Example app listening on port ${process.env.PORT}`)
 })
 
-const receivers = [ { email:'karanmegha99@gmail.com'}]
+const receivers = [ { email:'akash.kurup@aloissolutions.com'}]
 
 var status = {url:"",status:""}
 var web = []
