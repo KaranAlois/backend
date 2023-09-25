@@ -1,176 +1,201 @@
-const http = require('http');
-const https = require('https');
-const express = require('express')
-const app = express()
-const cors = require('cors');
-const { mail } = require('./Mail/SendMail');
-const Mail = new mail;
-const { MongoClient } = require('mongodb');
+const http = require("http");
+const https = require("https");
+const express = require("express");
+const app = express();
+const cors = require("cors");
+const { mail } = require("./Mail/SendMail");
+const Mail = new mail();
+const { MongoClient } = require("mongodb");
 var url = "mongodb://localhost:27017/";
 
-const websitesArray = require('./website.model')
-const websiteLog = require('./websiteLog.model')
+const websitesArray = require("./website.model");
+const websiteLog = require("./websiteLog.model");
 
 var date_time = new Date();
-var Tiny = require('tiny');
-const mongoServices = require('./mongoServices');
+var Tiny = require("tiny");
+const mongoServices = require("./mongoServices");
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 
 // const websites = ["https://akinolabs.com", "https://akinolabs.io", "https://aloissolutions.com", "https://aloissolutions.com.au", "https://adrivaservices.com", "https://aloiscomposites.com", "https://aloishealthcare.com", "https://careers.aloissolutions.com", "https://aloisexports.com", "https://solohpartners.com", "https://aloistechnologies.com/"]
 
+app.get("/", async (req, res) => {
+  res.send("status.akinolabs.com");
+});
 
-app.get('/', async(req,res)=>{
-  
-  res.send("Status.akinolabs.com")
-})
+// app.post("/data", async (req, res) => {
+//   console.log(req.body.website);
+//   const x = [];
+//   Tiny("website.tiny", function (err, db) {
+//     db.all(`${req.body.website}`, function (err, data) {
+//       console.log(data);
+//       x.push(data);
+//     });
+//   });
+//   res.send(x);
+// });
 
-app.post('/data', async(req,res)=>{
-  console.log(req.body.website);
-  const x = []
-  Tiny('website.tiny', function(err, db) {
-    db.all(`${req.body.website}`, function(err, data) {
-      console.log(data);
-      x.push(data)
-    });
-  });
-  res.send(x)
-})
-
-
-app.post('/', async(req, res) => {
-  const websites = await mongoServices.readDocument("websitesArray")
+app.post("/", async (req, res) => {
+  const websites = await mongoServices.readDocument("websitesArray");
 
   const checkPromises = websites.map((url) => checkWebsiteStatus(url.url));
   Promise.all(checkPromises)
-  .then((results) => {
-    console.log(results);
-    res.send(results)
-  })
-  .then(() => {
-    console.log('Data sent to the API successfully.');
-  })
-  .catch((error) => {
-    console.error('Error sending data to the API:', error.message);
-  });
-})
-
-app.post('/upload', async(req,res) => {
-  const website = req.body;
-  try{
-  await mongoServices.createDocument("websitesArray",req.body)
-  res.send("uploaded")
-  }
-  catch(err){
-    console.log(err);
-    res.send(err)
-  }
-})
-
-app.listen(process.env.PORT, (req,res) => {
-  console.log(`Example app listening on port ${process.env.PORT}`)
-})
-
-const receivers = [ { email:'akash.kurup@aloissolutions.com'}]
-
-var status = {url:"",status:""}
-var web = []
-function checkWebsiteStatus(url) {
-  const protocol = url.startsWith('https://') ? https : http;
-
-  return new Promise((resolve, reject) => {
-    protocol.get(url, (res) => {
-      if (res.statusCode === 200 || res.statusCode===403 || res.statusCode===301) {
-        Tiny('website.tiny', function(err, db) {
-          db.get(`${url}`, function(err, data) {
-            try{
-            if(data.status==="down")
-            Mail.sendMail(receivers,"Server is live now", `${url} is live!`)
-            }
-            catch(error){
-              db.set(`${url}`, {
-                status: 'live',
-                code: ''
-              }, function(err) {
-                console.log('set!');
-              });
-            }
-          });
-          db.update(`${url}`, {
-            status: 'live',
-          }, function(err) {
-            console.log('set!');
-          });
-        });
-        console.log(`${url} is live`);
-        resolve({ url, status: 'live' });
-        // console.log("-------------------------------------");
-      } else {
-        console.log(`${url} is down`);
-        Tiny('website.tiny', function(err, db) {
-          try{
-          db.get(`${url}`, function(err, data) {
-            if(data.status==="live")
-              Mail.sendMail(receivers,"Server is down", `${url} is down due to ${res.statusMessage} error`)
-          });
-          }
-          catch(error){
-            db.set(`${url}`, {
-              status: 'down',
-              code: res.statusMessage
-            }, function(err) {
-              console.log('set!');
-            });
-          }
-          db.update(`${url}`, {
-            status: 'down',
-            code: res.statusMessage
-          }, function(err) {
-            console.log('set!');
-          });
-        });
-        mongoServices.createDocument("Error Logs", {"url":url, "status":"down","statusMessage":res.statusMessage, "statusCode":res.statusCode, "time": date_time})
-        resolve({ url, status: 'down', statusCode: res.statusCode });
-        // console.log("-------------------------------------");
-      }
-    }).on('error', (err) => {
-      console.log(`${url} is down`);
-      Tiny('website.tiny', function(er, db) {
-        try{
-        db.get(`${url}`, function(er, data) {
-          if(data.status==="live")
-          Mail.sendMail(receivers,"Server is down", `${url} is down to ${err.message} error`)
-        });
-        }
-        catch(err){
-          db.set(`${url}`, {
-            status: 'down',
-            code: err.message,
-          }, function(err) {
-            console.log('set!');
-          });
-        }
-        db.set(`${url}`, {
-          status: 'down',
-          code: err.message,
-        }, function(err) {
-          console.log('set!');
-        });
-      });
-      mongoServices.createDocument("Error Logs", {"url":url, "status":"down","statusMessage":err.message, "time":date_time})
-      resolve({ url, status: 'down', error: err.message });
-      // console.log("-------------------------------------");
+    .then((results) => {
+      console.log(results);
+      res.send(results);
+    })
+    .then(() => {
+      console.log("Data sent to the API successfully.");
+    })
+    .catch((error) => {
+      console.error("Error sending data to the API:", error.message);
     });
+});
+
+app.post("/upload", async (req, res) => {
+  const website = req.body;
+  try {
+    await mongoServices.createDocument("websitesArray", req.body);
+    res.send("uploaded");
+  } catch (err) {
+    console.log(err);
+    res.send(err);
+  }
+});
+
+app.listen(process.env.PORT, (req, res) => {
+  console.log(`Example app listening on port ${process.env.PORT}`);
+});
+function checkWebsiteStatus(url, status) {
+  const protocol = url.startsWith("https://") ? https : http;
+  return new Promise((resolve, reject) => {
+    protocol
+      .get(url, (res) => {
+        if (
+          res.statusCode === 200 ||
+          res.statusCode === 403 ||
+          res.statusCode === 301
+        ) {
+          console.log(`${url} is live`);
+          if (status === "down") {
+            mongoServices.updateDocument(
+              "websitesArray",
+              { url: `${url}` },
+              { status: "live" }
+            );
+            resolve({
+              url,
+              status: "live",
+              errorCode: "-",
+              error: "-",
+            });
+          } else {
+            resolve(null);
+          }
+        } else {
+          console.log(`${url} is down`);
+          if (status === "live") {
+            mongoServices.updateDocument(
+              "websitesArray",
+              { url: `${url}` },
+              { status: "down" }
+            );
+            mongoServices.createDocument("Error Logs", {
+              url: url,
+              status: "down",
+              statusMessage: res.statusMessage,
+              statusCode: res.statusCode,
+              time: date_time,
+            });
+            resolve({
+              url,
+              status: "down",
+              errorCode: res.statusCode,
+              error: res.statusMessage,
+            });
+          } else {
+            resolve(null);
+          }
+        }
+      })
+      .on("error", (err) => {
+        console.log(`${url} is down`);
+        if (status === "down") {
+          mongoServices.updateDocument(
+            "websitesArray",
+            { url: `${url}` },
+            { status: "live" }
+          );
+          mongoServices.createDocument("Error Logs", {
+            url: url,
+            status: "down",
+            statusMessage: err.message,
+            time: date_time,
+          });
+          resolve({ url, status: "down", errorCode: "-", error: err.message });
+        } else {
+          resolve(null);
+        }
+      });
   });
 }
 
-async function abc(){
-  const websites = await mongoServices.readDocument("websitesArray")
-  for(let i=0;i<websites.length;i++){
-    checkWebsiteStatus(websites[i].url)
+// const receivers = [{ email: "akash.kurup@aloissolutions.com" }];
+const receivers = [{ email: "karanmegha99@gmail.com" }];
+
+async function abc() {
+  console.log(
+    "----------------------------start------------------------------"
+  );
+  const websites = await mongoServices.readDocument("websitesArray");
+  var result = [];
+  for (let i = 0; i < websites.length; i++) {
+    const status = await checkWebsiteStatus(
+      websites[i].url,
+      websites[i].status
+    );
+    if (status != null) {
+      result.push(status);
+    }
   }
+  console.log(date_time);
+  if (result.length > 0) {
+    console.log(result);
+    const html = `
+      <table border="1">
+      <thead>
+        <tr>
+          <th>URL</th>
+          <th>Status</th>
+          <th>Status Code</th>
+          <th>Error</th>
+        </tr>
+        </thead>
+        ${result
+          .map(
+            (i) =>
+              `
+            <tr>
+              <td>${i.url}</td>
+              <td>${i.status}</td>
+              <td>${i.errorCode}</td>
+              <td>${i.error}</td>
+            </tr>
+          `
+          )
+          .join("")}
+      </table>
+      `;
+    await Mail.sendMail(
+      receivers,
+      "Website Status",
+      "The status of the websites are shown below",
+      html
+    );
+  }
+  console.log(
+    "-----------------------------end-------------------------------"
+  );
 }
-abc()
+abc();
 const intervalId = setInterval(abc, 900000);
-
-
