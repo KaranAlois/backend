@@ -140,8 +140,8 @@ function checkWebsiteStatus(url, status) {
   });
 }
 
-// const receivers = [{ email: "akash.kurup@aloissolutions.com" }];
-const receivers = [{ email: "karanmegha99@gmail.com" }];
+const receivers = [{ email: "akash.kurup@aloissolutions.com" }];
+// const receivers = [{ email: "karanmegha99@gmail.com" }];
 
 async function abc() {
   console.log(
