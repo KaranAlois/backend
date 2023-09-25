@@ -12,7 +12,6 @@ const websitesArray = require("./website.model");
 const websiteLog = require("./websiteLog.model");
 
 var date_time = new Date();
-var Tiny = require("tiny");
 const mongoServices = require("./mongoServices");
 app.use(express.json());
 app.use(cors());
