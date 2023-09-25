@@ -89,6 +89,88 @@ function checkWebsiteStatus(url, status) {
               error: "-",
             });
           } else {
+            resolve({
+              url,
+              status: "live",
+            });
+          }
+        } else {
+          console.log(`${url} is down`);
+          if (status === "live") {
+            mongoServices.updateDocument(
+              "websitesArray",
+              { url: `${url}` },
+              { status: "down" }
+            );
+            mongoServices.createDocument("Error Logs", {
+              url: url,
+              status: "down",
+              statusMessage: res.statusMessage,
+              statusCode: res.statusCode,
+              time: date_time,
+            });
+            resolve({
+              url,
+              status: "down",
+              errorCode: res.statusCode,
+              error: res.statusMessage,
+            });
+          } else {
+            resolve({
+              url,
+              status: "down",
+              errorCode: res.statusCode,
+              error: res.statusMessage,
+            });
+          }
+        }
+      })
+      .on("error", (err) => {
+        console.log(`${url} is down`);
+        if (status === "down") {
+          mongoServices.updateDocument(
+            "websitesArray",
+            { url: `${url}` },
+            { status: "live" }
+          );
+          mongoServices.createDocument("Error Logs", {
+            url: url,
+            status: "down",
+            statusMessage: err.message,
+            time: date_time,
+          });
+          resolve({ url, status: "down", errorCode: "-", error: err.message });
+        } else {
+          resolve({ url, status: "down", errorCode: "-", error: err.message });
+        }
+      });
+  });
+}
+
+function checkWebsiteStatusNew(url, status) {
+  const protocol = url.startsWith("https://") ? https : http;
+  return new Promise((resolve, reject) => {
+    protocol
+      .get(url, (res) => {
+        if (
+          res.statusCode === 200 ||
+          res.statusCode === 403 ||
+          res.statusCode === 301
+        ) {
+          console.log(`${url} is live`);
+          if (status === "down") {
+            mongoServices.updateDocument(
+              "websitesArray",
+              { url: `${url}` },
+              { status: "live" }
+            );
+            resolve({
+              url,
+              status: "live",
+              errorCode: "-",
+              error: "-",
+            });
+          } else {
             resolve(null);
           }
         } else {
@@ -139,7 +221,9 @@ function checkWebsiteStatus(url, status) {
   });
 }
 
-const receivers = [{ email: "akash.kurup@aloissolutions.com" }];
+const receivers = [
+  { email: "akash.kurup@aloissolutions.com", email: "karanmegha99@gmail.com" },
+];
 // const receivers = [{ email: "karanmegha99@gmail.com" }];
 
 async function abc() {
@@ -149,7 +233,7 @@ async function abc() {
   const websites = await mongoServices.readDocument("websitesArray");
   var result = [];
   for (let i = 0; i < websites.length; i++) {
-    const status = await checkWebsiteStatus(
+    const status = await checkWebsiteStatusNew(
       websites[i].url,
       websites[i].status
     );
